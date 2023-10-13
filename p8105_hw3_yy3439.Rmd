@@ -11,6 +11,7 @@ library(p8105.datasets)
 library(tidyverse)
 library(ggridges)
 library(patchwork)
+library(ggplot2)
 data("instacart")
 ```
 
@@ -35,39 +36,90 @@ data("brfss_smart2010")
 
 #### Tidying-up Data
 ```{r}
+
 brfss_smart2010 = 
   brfss_smart2010 |>
-  janitor::clean_names()|>
-  filter(topic == "Overall Health")|>
-  mutate(response = as.factor(response))|>
-  filter(response == "Poor" | response == "Excellent")
+  janitor::clean_names()|> #format data to appropriate variable names 
+  filter(topic == "Overall Health")|> #focus only on the "Overall Health"
+  filter(response %in% c("Excellent","Very Good", "Good", "Fair", "Poor"))|> #include only responses from excellent to poor
+  mutate(response = forcats::fct_relevel(response, c("Poor", "Fair", "Good", "Very Good", "Excellent"))) #relevel the responses as a factor from "Poor" to "Excellent"
   
-
+ 
+ 
 ```
 
 #### 2002 Unique Obervation States
 
 ```{r}
-brfss_smart2010 |>
+states_2002<-brfss_smart2010 |>
   separate(locationdesc, into = c('state', 'location', sep = '-'))|>
   filter(year =="2002")|>
   group_by(state)|>
   distinct(location)|>
   summarise(distinct_location = n())|>
-  filter(distinct_location >= 7)
-```
+  filter(distinct_location > 6)
 
+states_2002
+```
+As shown in the above tibble, we have 5 states that have 7 or more distinct locations： FL, MA, NC, NJ, and PA. Similarly, as shown in the tibble below, we have 14 states that have 7 or more distinct locations: CA, CO, FL, MA, MD, NC, NE, NJ, NY, OH, PA, SC, TX, and WA.
 
 
 #### 2010 Unique Obervation States
 
 ```{r}
-brfss_smart2010 |>
+states_2010 <-brfss_smart2010 |>
   separate(locationdesc, into = c('state', 'location', sep = '-'))|>
   filter(year =="2010")|>
   group_by(state)|>
   distinct(location)|>
   summarise(distinct_location = n())|>
-  filter(distinct_location >= 7)
+  filter(distinct_location > 6)
+
+states_2010
+```
+
+
+#### Data_value
+
+
+```{r}
+avrage_brfss <- brfss_smart2010|>
+  filter(response == "Excellent")|>
+  group_by(year, locationabbr)|>
+  select(year,  state = locationabbr, response, data_value)|>
+   summarise(
+    avg_data_value = mean(data_value, na.rm = TRUE))
+  
+ avrage_brfss
+  
+```
+#### Spaghetti Plot 
+
+
+```{r}
+ggplot(avrage_brfss, aes(x = year, y = avg_data_value, group = state))+
+  geom_line(aes(color = state))+
+  theme_minimal()+
+  labs(title = "Average Value of Excellent Responses Over Years", x = "Year", y = "Average Value")
+```
+
+#### Two Panel Plot
+
+```{r}
+panel_brfss = brfss_smart2010|>
+  filter(year%in% c(2006, 2010))|>
+  filter(locationabbr == "NY")
+
+ggplot(panel_brfss, aes(x = response, y = data_value, fill = response))+
+  geom_boxplot()+
+  facet_grid(~year)+
+  labs(
+    title = "Data Value Distributions for the Year of 2006 and 2010",
+    x = "Response",
+    y = "Data Value"
+  )
+  
+  
+  
 ```
 
