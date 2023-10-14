@@ -167,7 +167,8 @@ covar_clean = nhanes_covar|>
 #Organize the `accel` Dataset
 
 accel_clean = nhanes_accel|>
-  janitor::clean_names()
+  janitor::clean_names()|>
+  drop_na()
   
 ```
 
@@ -175,4 +176,59 @@ accel_clean = nhanes_accel|>
 # Joinging Data set
 joined_dataset <- full_join(covar_clean, accel_clean, by = "seqn") 
 ```
+
+The final merged data set contains all variables from the `covar` and `accel` datasets and joined by the variable `seqn`, which appears in both datasets. 
+
+#### Table 1: Number of Male and Female in each of the Education Category
+
+```{r}
+edu_gender <- joined_dataset|>
+  group_by(sex, education)|>
+  drop_na()|>
+  summarise(count = n(), .groups = "drop")|>
+  pivot_wider(
+    names_from = sex,
+    values_from = count
+  )|>
+  knitr::kable(caption = "Number of Male and Female in Each Education Level")
+```
+As shown in the table, the total number of female participants who have less than and more than high school degrees is larger than the total number of male participants. In contrast, the total number of male participants who have high school degrees is larger than the female participants. 
+#### Visualization of the Age Distribution for Male and Female Participants
+
+
+```{r}
+joined_clean_data <- joined_dataset|>drop_na()
+ggplot(joined_clean_data, 
+       aes(x = education, y = age, color = sex)) +
+       geom_boxplot()+
+       labs(
+         title = "Age Distribution for Education Level of Male and Female Participants",
+         x = "Education Level",
+         y = "Age"
+       )+
+  theme_minimal()
+  
+```
+As shown in the boxplot, the medians of age distribution in which females who have high school or less than high school degrees are larger than the male participants. Specifically, people who aged below 50s tend to have higher than high school degrees, and the age distribution in which male and female participants having less than high school degrees are similar. 
+
+
+
+#### Total Activity Time per Participant
+```{r}
+activity_par <- joined_clean_data|>
+  group_by(seqn)|>
+  pivot_longer(
+    min1:min1440,
+    names_to = "time",
+    values_to = "activity"
+  )|>
+  summarise(total_activity_time = sum(activity))
+```
+
+#### Visualization of the Total Activity Time per Participant
+
+```{r}
+
+```
+
 
