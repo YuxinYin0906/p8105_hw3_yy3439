@@ -174,7 +174,7 @@ accel_clean = nhanes_accel|>
 
 ```{r}
 # Joinging Data set
-joined_dataset <- full_join(covar_clean, accel_clean, by = "seqn") 
+joined_dataset <- left_join(covar_clean, accel_clean, by = "seqn") 
 ```
 
 The final merged data set contains all variables from the `covar` and `accel` datasets and joined by the variable `seqn`, which appears in both datasets. 
@@ -193,6 +193,7 @@ edu_gender <- joined_dataset|>
   knitr::kable(caption = "Number of Male and Female in Each Education Level")
 ```
 As shown in the table, the total number of female participants who have less than and more than high school degrees is larger than the total number of male participants. In contrast, the total number of male participants who have high school degrees is larger than the female participants. 
+
 #### Visualization of the Age Distribution for Male and Female Participants
 
 
@@ -225,10 +226,25 @@ activity_par <- joined_clean_data|>
   summarise(total_activity_time = sum(activity))
 ```
 
+
 #### Visualization of the Total Activity Time per Participant
 
 ```{r}
+total_activity = inner_join(joined_clean_data, activity_par, by = "seqn")|>
+  relocate(seqn, sex, age, bmi, education,total_activity_time ) #binding the two dataset and relocate so we can see the total activity time more easily 
 
+```
+```{r}
+#Visualization
+ggplot(total_activity, aes(x = age, y = total_activity_time, fill = sex))+
+  geom_point()+
+  geom_smooth()+
+  labs(
+    title = "Total Activity Time for Each Participant",
+    x = "Age",
+    y = "Total Activity Time"
+  )+
+  facet_grid(.~education)
 ```
 
 
