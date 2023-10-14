@@ -246,5 +246,5 @@ ggplot(total_activity, aes(x = age, y = total_activity_time, fill = sex))+
   )+
   facet_grid(.~education)
 ```
-
-
+##### Discussion
+As shown in the plot above, male with high school equivalaent and more than high school degrees generally have more activity time compared to their female counterparts. However, female with less than high school degrees have more activity time on average compared to their male counterparts across the age group. For all male and female, people who are younger than 40 years old have the most activity time whereas the activity time dropped eminently for people aged 60 or above. 
