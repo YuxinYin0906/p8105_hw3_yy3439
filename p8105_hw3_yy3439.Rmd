@@ -89,15 +89,14 @@ brfss_smart2010 =
 ```{r}
 states_2002<-brfss_smart2010 |>
   separate(locationdesc, into = c('state', 'location', sep = '-'))|>
-  filter(year =="2002")|>
+  filter(year =='2002')|>
   group_by(state)|>
-  distinct(location)|>
-  summarise(distinct_location = n())|>
-  filter(distinct_location > 6)
+  summarise(distinct_location = n_distinct(location))|>
+  filter(distinct_location > 6)|>
+  knitr::kable()
 
 states_2002
 ```
-As shown in the above tibble, we have 5 states that have 7 or more distinct locations： FL, MA, NC, NJ, and PA. Similarly, as shown in the tibble below, we have 14 states that have 7 or more distinct locations: CA, CO, FL, MA, MD, NC, NE, NJ, NY, OH, PA, SC, TX, and WA.
 
 
 #### 2010 Unique Obervation States
@@ -109,11 +108,12 @@ states_2010 <-brfss_smart2010 |>
   group_by(state)|>
   distinct(location)|>
   summarise(distinct_location = n())|>
-  filter(distinct_location > 6)
+  filter(distinct_location > 6)|>
+  knitr::kable()
 
 states_2010
 ```
-
+As shown in the above table, we have 5 states that have 7 or more distinct locations： FL, MA, NC, NJ, and PA. Similarly, we have 14 states that have 7 or more distinct locations: CA, CO, FL, MA, MD, NC, NE, NJ, NY, OH, PA, SC, TX, and WA.
 
 #### Data_value
 
@@ -133,10 +133,12 @@ avrage_brfss <- brfss_smart2010|>
 
 
 ```{r}
-ggplot(avrage_brfss, aes(x = year, y = avg_data_value, group = state))+
+avg_excellent = ggplot(avrage_brfss, aes(x = year, y = avg_data_value, group = state))+
   geom_line(aes(color = state))+
   theme_minimal()+
   labs(title = "Average Value of Excellent Responses Over Years", x = "Year", y = "Average Value")
+ggsave("average value of excellent.png", avg_excellent)
+avg_excellent
 ```
 
 #### Two Panel Plot
@@ -146,7 +148,7 @@ panel_brfss = brfss_smart2010|>
   filter(year%in% c(2006, 2010))|>
   filter(locationabbr == "NY")
 
-ggplot(panel_brfss, aes(x = response, y = data_value, fill = response))+
+data_value_dist = ggplot(panel_brfss, aes(x = response, y = data_value, fill = response))+
   geom_boxplot()+
   facet_grid(~year)+
   labs(
@@ -155,8 +157,8 @@ ggplot(panel_brfss, aes(x = response, y = data_value, fill = response))+
     y = "Data Value"
   )
   
-  
-  
+ggsave("data value distribution.png",data_value_dist )
+data_value_dist
 ```
 
 
@@ -164,12 +166,15 @@ ggplot(panel_brfss, aes(x = response, y = data_value, fill = response))+
 ### Problem 3
 
 
+#### Load Data
 ```{r}
 #Load Data
 
 nhanes_covar <- read_csv("nhanes_covar.csv", skip = 4)
 nhanes_accel <- read_csv("nhanes_accel.csv")
 ```
+
+#### Organize the `covar` Dataset
 
 ```{r}
 #Organize the `covar` Dataset
@@ -199,6 +204,8 @@ covar_clean = nhanes_covar|>
 
 ```
 
+#### Organize the `accel` Dataset
+
 ```{r}
 #Organize the `accel` Dataset
 
@@ -207,6 +214,8 @@ accel_clean = nhanes_accel|>
   drop_na()
   
 ```
+
+#### Joinging Data set
 
 ```{r}
 # Joinging Data set
@@ -230,12 +239,13 @@ edu_gender <- joined_dataset|>
 ```
 As shown in the table, the total number of female participants who have less than and more than high school degrees is larger than the total number of male participants. In contrast, the total number of male participants who have high school degrees is larger than the female participants. 
 
+
 #### Visualization of the Age Distribution for Male and Female Participants
 
 
 ```{r}
 joined_clean_data <- joined_dataset|>drop_na()
-ggplot(joined_clean_data, 
+age_dist = ggplot(joined_clean_data, 
        aes(x = education, y = age, color = sex)) +
        geom_boxplot()+
        labs(
@@ -244,7 +254,8 @@ ggplot(joined_clean_data,
          y = "Age"
        )+
   theme_minimal()
-  
+ggsave("age_disttribution.png", age_dist )  
+age_dist
 ```
 As shown in the boxplot, the medians of age distribution in which females who have high school or less than high school degrees are larger than the male participants. Specifically, people who aged below 50s tend to have higher than high school degrees, and the age distribution in which male and female participants having less than high school degrees are similar. 
 
@@ -282,12 +293,13 @@ activity_plot = ggplot(total_activity, aes(x = age, y = total_activity_time, fil
   )+
   facet_grid(.~education)
 ggsave("total_activity_time.png", activity_plot)
+activity_plot
 ```
 ##### Discussion
 As shown in the plot above, male with high school equivalaent and more than high school degrees generally have more activity time compared to their female counterparts. However, female with less than high school degrees have more activity time on average compared to their male counterparts across the age group. For all male and female, people who are younger than 40 years old have the most activity time whereas the activity time dropped eminently for people aged 60 or above. 
 
 
-#### three-panel plot
+#### Three-Panel Plot
 
 ```{r}
 minute = joined_clean_data|>
@@ -298,7 +310,6 @@ minute = joined_clean_data|>
   )|>
 separate(time, into = c("time", "minute"), sep = 3)|>
   mutate(minute = as.numeric(minute))
-  
 ```
 
 
@@ -317,7 +328,7 @@ minute_plot = ggplot(minute, aes(x = minute, y = activity, color = sex))+
     breaks = c(0, 240, 480, 720, 960, 1200, 1440)
   )+
   theme(legend.position = "bottom")
-
+minute_plot
 ```
 ```{r}
 ggsave("24_Hour_Activity_Time.png", minute_plot)
